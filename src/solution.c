@@ -1111,15 +1111,32 @@ static int outecef(unsigned char *buff, const char *s, const sol_t *sol,
     const char *sep=opt2sep(opt);
     char *p=(char *)buff;
 
+    /* 緯度経度の出力機能追加 @SEKINO 19/9/12 ------------------------------------*/
+    double pos[3],vel[3],dms1[3],dms2[3],P[9],Q[9];
+
+    ecef2pos(sol->rr,pos);
+    soltocov(sol,P);
+    covenu(pos,P,Q);
+    if (opt->height==1) { /* geodetic height */
+        /*pos[2]-=geoidh(pos);*/
+    }
+    if (opt->degf) {
+        deg2dms(pos[0]*R2D,dms1,5);
+        deg2dms(pos[1]*R2D,dms2,5);
+    }
+    /* -----------------------------------------------------------------------*/
+
     trace(3,"outecef:\n");
 
     /* データの区切り方と出力値を変更 @SEKINO 19/3/8 ------------------------------------*/
-    	p+=sprintf(p,"\n%s\n%14.4f\n%14.4f\n%14.4f\n%4.4f\n%4.4f\n%4.4f\n",
-    			         s,sol->rr[0],sol->rr[1],sol->rr[2],sol->rr[3],sol->rr[4],sol->rr[5]);
+    	p+=sprintf(p,"\n%s\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.9f\n%.9f\n%.4f\n%d\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
+    			         s,sol->rr[0],sol->rr[1],sol->rr[2],sol->rr[3],sol->rr[4],sol->rr[5],pos[0]*R2D,pos[1]*R2D,pos[2],sol->stat,SQRT(Q[4]),
+                   SQRT(Q[0]),SQRT(Q[8]),sqvar(Q[1]),sqvar(Q[2]),sqvar(Q[5]));
 
     if (opt->outvel) { /* output velocity */
-      p+=sprintf(p,"\n%s\n%14.4f\n%14.4f\n%14.4f\n%4.4f\n%4.4f\n%4.4f\n",
-    			         s,sol->rr[0],sol->rr[1],sol->rr[2],sol->rr[3],sol->rr[4],sol->rr[5]);
+      p+=sprintf(p,"\n%s\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.9f\n%.9f\n%.4f\n%d\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
+    			         s,sol->rr[0],sol->rr[1],sol->rr[2],sol->rr[3],sol->rr[4],sol->rr[5],pos[0]*R2D,pos[1]*R2D,pos[2],sol->stat,SQRT(Q[4]),
+                   SQRT(Q[0]),SQRT(Q[8]),sqvar(Q[1]),sqvar(Q[2]),sqvar(Q[5]));
     }
     p+=sprintf(p,"\n");
     return p-(char *)buff;
